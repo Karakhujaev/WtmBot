@@ -8,12 +8,7 @@ from telegram.ext.filters import Filters
 import requests
 from bs4 import BeautifulSoup
 import os
-import telepot
-from config import token
 
-bot = telepot.Bot(token)
-
-liked = 0
 info = []
 buttons = []
 like_dislike = []
@@ -22,7 +17,6 @@ favourites = []
 history = []
 times = 1
 ad_urls = ''
-caption = ''
 
 
 def start(update: Update, context: CallbackContext):
@@ -99,17 +93,22 @@ def search(update: Update, context: CallbackContext):
             link = info[i][2]
             index = i+1
             message += f"{index}. {singer} - {music}\n\n"
+
     context.bot.send_message(chat_id=chat_id,text=message, reply_markup=InlineKeyboardMarkup(buttons))
    
 
 def button(update: Update, context: CallbackContext):
-    global info, times, buttons, ad_urls, like_dislike, favourites, song_number, liked, caption
+    global info, times, buttons, ad_urls, like_dislike, favourites, song_number
 
     chat_id = update.effective_chat.id
-
     query = update.callback_query
 
-  
+    like_dislike = [
+        [
+            InlineKeyboardButton('❤️', callback_data='btn13'),
+            InlineKeyboardButton(f'👍', callback_data='btn14')
+        ]
+    ]
 
     if query.data == f'btn11':
         query.message.delete()
@@ -125,7 +124,7 @@ def button(update: Update, context: CallbackContext):
                 song_number = i
                 singer = info[i][0]
                 music = info[i][1]
-                ad_urls.append([info[i][0], info[i][1], info[i][2], info[i][3]])
+                ad_urls.append([info[i][0], info[i][1], info[i][2]])
                 index+=1
                 message += f"{index}. {singer} - {music}\n\n"
         context.bot.send_message(chat_id=chat_id,text=message, reply_markup=InlineKeyboardMarkup(buttons))
@@ -160,12 +159,6 @@ def button(update: Update, context: CallbackContext):
                 song = requests.get(url)
                 with open(f'my_song.mp3', 'wb') as f:
                     f.write(song.content)
-                like_dislike = [
-                    [
-                        InlineKeyboardButton('❤️', callback_data='btn13'),
-                        InlineKeyboardButton(f'👍{ad_urls[x][3]}', callback_data='btn14')
-                    ]
-                ]
                 caption = f'{author} - {name}\n\nhttps://t.me/muz_zonebot'
                 context.bot.send_audio(chat_id, open('my_song.mp3','rb'),  reply_markup=InlineKeyboardMarkup(like_dislike), caption=caption)
 
@@ -179,48 +172,16 @@ def button(update: Update, context: CallbackContext):
                 song = requests.get(url)
                 with open(f'my_song.mp3', 'wb') as f:
                     f.write(song.content)
-                like_dislike = [
-                    [
-                        InlineKeyboardButton('❤️', callback_data='btn13'),
-                        InlineKeyboardButton(f'👍{info[x][3]}', callback_data='btn14')
-                    ]
-                ]
                 caption = f'{author} - {name}\n\nhttps://t.me/muz_zonebot'
                 context.bot.send_audio(chat_id, open('my_song.mp3','rb'),  reply_markup=InlineKeyboardMarkup(like_dislike), caption=caption)
 
-        if query.data == f'btn14':
-            if liked==0:
-                info[song_number][3] += 1
-                print(info[song_number][3])
-                like_dislike = [
-                    [
-                        InlineKeyboardButton('❤️', callback_data='btn13'),
-                        InlineKeyboardButton(f'👍{info[song_number][3]}', callback_data='btn14')
-                    ]
-                ]
-                liked = 1
-                bot.editMessageReplyMarkup({ like_dislike: like_dislike }, { chat_id: chat_id, update.callback_query.inline_message_id: query.message.message_id })
-                
-            elif liked!=0 and info[song_number][3] > 0:
-                info[song_number][3] -= 1
+    if query.data == f'btn14':
+        info[song_number][3] += 1
+        print(info[song_number][3])
 
-                like_dislike = [
-                    [
-                        InlineKeyboardButton('❤️', callback_data='btn13'),
-                        InlineKeyboardButton(f'👍{info[song_number][3]}', callback_data='btn14')
-                    ]
-                ]
-
-                bot.editMessageReplyMarkup({ like_dislike: like_dislike }, { chat_id: chat_id, update.callback_query.inline_message_id: query.message.message_id })
-
-
-
-                print(info[song_number][3])
-                liked = 0
-
-        elif query.data == f'btn13':
-            favourites.append(info[song_number])
-            print(favourites)
+    elif query.data == f'btn13':
+        favourites.append(info[song_number])
+        print(favourites)
 
 def list(update: Update, context: CallbackContext):
     global favourites, song_number
@@ -239,7 +200,7 @@ def list(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=chat_id,text=message, reply_markup=InlineKeyboardMarkup(buttons))
 
     
-updater = Updater('5377685059:AAErJgAD3Kel9_j0MVQNx2zOamgCA6wFWAs')
+updater = Updater('5340525544:AAF8vQO2n6IS6sXeKwHjcjuVSf3p-77RRdY')
 
 updater.dispatcher.add_handler(CommandHandler('start', start))
 updater.dispatcher.add_handler(CommandHandler('list', list))
